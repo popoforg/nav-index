@@ -674,17 +674,17 @@
         { id: 'cat-3', name: 'AI', icon: '🤖', order: 2, createdAt: Date.now() },
       ],
       cards: [
-        { id: 'card-1', categoryId: 'cat-1', title: 'GitHub', url: 'https://github.com', emoji: '🐙', size: '1x1', color: 'var(--accent-blue)', order: 0, createdAt: Date.now() },
-        { id: 'card-2', categoryId: 'cat-1', title: 'ChatGPT', url: 'https://chat.openai.com', emoji: '🤖', size: '1x1', color: 'var(--accent-green)', order: 1, createdAt: Date.now() },
-        { id: 'card-3', categoryId: 'cat-1', title: 'DeepSeek', url: 'https://deepseek.com', emoji: '🧠', size: '1x1', color: 'var(--accent-purple)', order: 2, createdAt: Date.now() },
-        { id: 'card-4', categoryId: 'cat-1', title: 'Claude', url: 'https://claude.ai', emoji: '✨', size: '1x1', color: 'var(--accent-orange)', order: 3, createdAt: Date.now() },
-        { id: 'card-5', categoryId: 'cat-1', title: 'Vercel', url: 'https://vercel.com', emoji: '▲', size: '1x1', color: 'var(--accent-pink)', order: 4, createdAt: Date.now() },
-        { id: 'card-6', categoryId: 'cat-1', title: 'Figma', url: 'https://figma.com', emoji: '🎨', size: '1x1', color: 'var(--accent-yellow)', order: 5, createdAt: Date.now() },
-        { id: 'card-7', categoryId: 'cat-2', title: 'Stack Overflow', url: 'https://stackoverflow.com', emoji: '📚', size: '1x1', color: 'var(--accent-orange)', order: 0, createdAt: Date.now() },
-        { id: 'card-8', categoryId: 'cat-2', title: 'MDN', url: 'https://developer.mozilla.org', emoji: '🦊', size: '1x1', color: 'var(--accent-blue)', order: 1, createdAt: Date.now() },
-        { id: 'card-9', categoryId: 'cat-2', title: 'npm', url: 'https://npmjs.com', emoji: '📦', size: '1x1', color: 'var(--accent-red)', order: 2, createdAt: Date.now() },
-        { id: 'card-10', categoryId: 'cat-3', title: 'Midjourney', url: 'https://midjourney.com', emoji: '🎨', size: '1x1', color: 'var(--accent-pink)', order: 0, createdAt: Date.now() },
-        { id: 'card-11', categoryId: 'cat-3', title: 'Stable Diffusion', url: 'https://stability.ai', emoji: '🖼️', size: '1x1', color: 'var(--accent-purple)', order: 1, createdAt: Date.now() },
+        { id: 'card-1', categoryId: 'cat-1', title: 'GitHub', url: 'https://github.com', emoji: '🐙', size: '1x1', color: 'blue', order: 0, createdAt: Date.now() },
+        { id: 'card-2', categoryId: 'cat-1', title: 'ChatGPT', url: 'https://chat.openai.com', emoji: '🤖', size: '1x1', color: 'green', order: 1, createdAt: Date.now() },
+        { id: 'card-3', categoryId: 'cat-1', title: 'DeepSeek', url: 'https://deepseek.com', emoji: '🧠', size: '1x1', color: 'purple', order: 2, createdAt: Date.now() },
+        { id: 'card-4', categoryId: 'cat-1', title: 'Claude', url: 'https://claude.ai', emoji: '✨', size: '1x1', color: 'orange', order: 3, createdAt: Date.now() },
+        { id: 'card-5', categoryId: 'cat-1', title: 'Vercel', url: 'https://vercel.com', emoji: '▲', size: '1x1', color: 'pink', order: 4, createdAt: Date.now() },
+        { id: 'card-6', categoryId: 'cat-1', title: 'Figma', url: 'https://figma.com', emoji: '🎨', size: '1x1', color: 'yellow', order: 5, createdAt: Date.now() },
+        { id: 'card-7', categoryId: 'cat-2', title: 'Stack Overflow', url: 'https://stackoverflow.com', emoji: '📚', size: '1x1', color: 'orange', order: 0, createdAt: Date.now() },
+        { id: 'card-8', categoryId: 'cat-2', title: 'MDN', url: 'https://developer.mozilla.org', emoji: '🦊', size: '1x1', color: 'blue', order: 1, createdAt: Date.now() },
+        { id: 'card-9', categoryId: 'cat-2', title: 'npm', url: 'https://npmjs.com', emoji: '📦', size: '1x1', color: 'red', order: 2, createdAt: Date.now() },
+        { id: 'card-10', categoryId: 'cat-3', title: 'Midjourney', url: 'https://midjourney.com', emoji: '🎨', size: '1x1', color: 'pink', order: 0, createdAt: Date.now() },
+        { id: 'card-11', categoryId: 'cat-3', title: 'Stable Diffusion', url: 'https://stability.ai', emoji: '🖼️', size: '1x1', color: 'purple', order: 1, createdAt: Date.now() },
       ],
       settings: {}
     };
@@ -822,10 +822,10 @@
       }
 
       grid.innerHTML = categoryCards.map(card => `
-        <div class="card size-${card.size}"
+        <div class="card card-${card.size}"
              data-id="${card.id}"
-             draggable="true"
-             style="--card-color: ${card.color}">
+             data-color="${card.color}"
+             draggable="true">
           <div class="card-icon">${card.emoji}</div>
           <div class="card-title">${card.title}</div>
         </div>
@@ -1288,7 +1288,7 @@
           url: url || 'https://',
           emoji,
           size: state.selectedCardSize,
-          color: ['var(--accent-blue)', 'var(--accent-green)', 'var(--accent-purple)', 'var(--accent-orange)', 'var(--accent-pink)', 'var(--accent-yellow)'][Math.floor(Math.random() * 6)],
+          color: ['blue', 'green', 'purple', 'orange', 'pink', 'yellow'][Math.floor(Math.random() * 6)],
           order: categoryCards.length,
           createdAt: Date.now()
         };
