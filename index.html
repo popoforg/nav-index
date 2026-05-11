@@ -366,8 +366,14 @@
       overflow: hidden;
     }
 
-    .context-menu.show {
+    .context-menu.visible {
       display: block;
+    }
+
+    .context-menu-divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 4px 0;
     }
 
     .context-menu-item {
@@ -405,7 +411,7 @@
       z-index: 1000;
     }
 
-    .modal-overlay.show {
+    .modal-overlay.visible {
       display: flex;
     }
 
@@ -692,6 +698,8 @@
       selectedCardSize: '1x1'
     };
 
+    let currentContextCard = null;
+
     // 加载数据
     function loadData() {
       const saved = localStorage.getItem('navIndexData');
@@ -976,10 +984,203 @@
       draggedCardId = null;
     }
 
-    function showContextMenu(e, cardId) {}
+    function showContextMenu(e, cardId) {
+      currentContextCard = state.cards.find(c => c.id === cardId);
+      if (!currentContextCard) return;
+
+      const menu = document.getElementById('contextMenu');
+      menu.innerHTML = `
+        <div class="context-menu-item" data-action="open">
+          <span>↗</span> 在新标签页打开
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" data-action="size">
+          <span>◧</span> 布局
+        </div>
+        <div class="size-options" id="contextSizeOptions" style="display:none; padding: 8px 16px;">
+          <div class="size-option ${currentContextCard.size === '1x1' ? 'active' : ''}" data-size="1x1">1x1</div>
+          <div class="size-option ${currentContextCard.size === '1x2' ? 'active' : ''}" data-size="1x2">1x2</div>
+          <div class="size-option ${currentContextCard.size === '2x1' ? 'active' : ''}" data-size="2x1">2x1</div>
+          <div class="size-option ${currentContextCard.size === '2x2' ? 'active' : ''}" data-size="2x2">2x2</div>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" data-action="edit">
+          <span>✎</span> 编辑卡片
+        </div>
+        <div class="context-menu-item danger" data-action="delete">
+          <span>✕</span> 删除
+        </div>
+      `;
+
+      menu.style.left = `${e.clientX}px`;
+      menu.style.top = `${e.clientY}px`;
+      menu.classList.add('visible');
+
+      // 绑定菜单项事件
+      menu.querySelectorAll('.context-menu-item').forEach(item => {
+        item.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          const action = item.dataset.action;
+          handleContextAction(action);
+          hideContextMenu();
+        });
+      });
+
+      // 布局选项切换
+      menu.querySelectorAll('.size-option').forEach(opt => {
+        opt.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          const size = opt.dataset.size;
+          if (currentContextCard) {
+            currentContextCard.size = size;
+            saveData();
+            renderCards();
+          }
+          hideContextMenu();
+        });
+      });
+
+      // 布局按钮显示/隐藏子选项
+      const sizeItem = menu.querySelector('[data-action="size"]');
+      sizeItem.addEventListener('mouseenter', () => {
+        document.getElementById('contextSizeOptions').style.display = 'flex';
+      });
+      sizeItem.addEventListener('mouseleave', () => {
+        document.getElementById('contextSizeOptions').style.display = 'none';
+      });
+    }
+
+    function hideContextMenu() {
+      document.getElementById('contextMenu').classList.remove('visible');
+      currentContextCard = null;
+    }
+
+    function handleContextAction(action) {
+      if (!currentContextCard) return;
+
+      switch (action) {
+        case 'open':
+          window.open(currentContextCard.url, '_blank');
+          break;
+        case 'edit':
+          openCardModal(currentContextCard.id);
+          break;
+        case 'delete':
+          deleteCard(currentContextCard.id);
+          break;
+      }
+    }
+
     function openCategoryModal(catId) {}
     function deleteCategory(catId) {}
-    function openCardModal() {}
+
+    function openCardModal(cardId = null) {
+      const modal = document.getElementById('cardModal');
+      const title = document.getElementById('cardModalTitle');
+      const titleInput = document.getElementById('cardTitleInput');
+      const urlInput = document.getElementById('cardUrlInput');
+      const emojiInput = document.getElementById('cardEmojiInput');
+
+      if (cardId) {
+        const card = state.cards.find(c => c.id === cardId);
+        if (!card) return;
+        state.editingCard = card;
+        title.textContent = '编辑卡片';
+        titleInput.value = card.title;
+        urlInput.value = card.url;
+        emojiInput.value = card.emoji;
+        state.selectedCardSize = card.size;
+      } else {
+        state.editingCard = null;
+        title.textContent = '添加卡片';
+        titleInput.value = '';
+        urlInput.value = '';
+        emojiInput.value = '🚀';
+        state.selectedCardSize = '1x1';
+      }
+
+      // 更新尺寸选项
+      document.querySelectorAll('#sizeOptions .size-option').forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.size === state.selectedCardSize);
+      });
+
+      modal.classList.add('visible');
+      titleInput.focus();
+    }
+
+    function closeCardModal() {
+      document.getElementById('cardModal').classList.remove('visible');
+      state.editingCard = null;
+    }
+
+    function saveCard() {
+      const title = document.getElementById('cardTitleInput').value.trim();
+      const url = document.getElementById('cardUrlInput').value.trim();
+      const emoji = document.getElementById('cardEmojiInput').value.trim() || '🚀';
+
+      if (!title) {
+        showToast('请输入标题');
+        return;
+      }
+
+      if (state.editingCard) {
+        // 编辑
+        state.editingCard.title = title;
+        state.editingCard.url = url || 'https://';
+        state.editingCard.emoji = emoji;
+        state.editingCard.size = state.selectedCardSize;
+      } else {
+        // 新增
+        const categoryCards = state.cards.filter(c => c.categoryId === state.activeCategoryId);
+        const newCard = {
+          id: generateId(),
+          categoryId: state.activeCategoryId,
+          title,
+          url: url || 'https://',
+          emoji,
+          size: state.selectedCardSize,
+          color: ['var(--accent-blue)', 'var(--accent-green)', 'var(--accent-purple)', 'var(--accent-orange)', 'var(--accent-pink)', 'var(--accent-yellow)'][Math.floor(Math.random() * 6)],
+          order: categoryCards.length,
+          createdAt: Date.now()
+        };
+        state.cards.push(newCard);
+      }
+
+      saveData();
+      renderCards();
+      closeCardModal();
+      showToast(state.editingCard ? '卡片已更新' : '卡片已添加');
+    }
+
+    function deleteCard(cardId) {
+      state.cards = state.cards.filter(c => c.id !== cardId);
+      saveData();
+      renderCards();
+      showToast('卡片已删除');
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('visible');
+      setTimeout(() => toast.classList.remove('visible'), 2000);
+    }
+
+    // 尺寸选项事件
+    document.querySelectorAll('#sizeOptions .size-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        document.querySelectorAll('#sizeOptions .size-option').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+        state.selectedCardSize = opt.dataset.size;
+      });
+    });
+
+    document.getElementById('cardCancel').addEventListener('click', closeCardModal);
+    document.getElementById('cardConfirm').addEventListener('click', saveCard);
+    document.getElementById('addCardBtn').addEventListener('click', () => openCardModal());
+
+    // 点击其他地方关闭菜单
+    document.addEventListener('click', hideContextMenu);
 
     // 启动
     ensureCategoryHeader();
