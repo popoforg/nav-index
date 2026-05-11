@@ -185,7 +185,7 @@
         .main-content {
             flex: 1;
             margin-left: var(--sidebar-width);
-            padding: 40px 48px;
+            padding: 40px 48px 50px;
         }
 
         /* Header */
@@ -441,12 +441,16 @@
 
         /* Status Bar */
         .status-bar {
-            margin-top: 80px;
-            padding: 24px 0;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 99;
+            padding: 10px 24px;
+            background: var(--bg-primary);
             border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: center;
-            gap: 32px;
             font-size: 11px;
             color: var(--text-tertiary);
         }
@@ -863,12 +867,12 @@
                 </div>
                 <div class="cards-grid" id="cardsGrid"></div>
             </section>
-
-            <footer class="status-bar">
-                <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">闽ICP备2021014924号-1</a>
-            </footer>
         </main>
     </div>
+
+    <footer class="status-bar">
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">闽ICP备2021014924号-1</a>
+    </footer>
 
     <div class="context-menu" id="contextMenu"></div>
 
