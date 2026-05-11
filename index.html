@@ -92,12 +92,13 @@
     }
 
     .sidebar-category {
-      width: 48px;
-      height: 48px;
+      width: 56px;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      gap: 4px;
+      padding: 8px 4px;
       border: var(--border-width) solid transparent;
       border-radius: var(--border-radius);
       cursor: pointer;
@@ -106,12 +107,30 @@
 
     .sidebar-category:hover {
       border-color: var(--border-color);
-      transform: scale(1.05);
     }
 
     .sidebar-category.active {
       border-color: var(--color-yellow);
       background: rgba(255, 204, 0, 0.1);
+    }
+
+    .sidebar-category .cat-icon {
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .sidebar-category .cat-name {
+      font-size: 10px;
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 50px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sidebar-category.active .cat-name {
+      color: var(--color-yellow);
     }
 
     .sidebar-add {
@@ -395,6 +414,14 @@
     .context-menu-item.danger:hover {
       background: var(--color-red);
       color: var(--text-primary);
+    }
+
+    .context-menu-label {
+      padding: 8px 16px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     /* Modal */
@@ -765,42 +792,29 @@
         <div class="sidebar-category ${cat.id === state.activeCategoryId ? 'active' : ''}"
              data-id="${cat.id}"
              draggable="true">
-          <span>${cat.icon}</span>
-          <div class="cat-actions">
-            <div class="cat-action" data-action="edit" title="编辑">✎</div>
-            <div class="cat-action" data-action="delete" title="删除">✕</div>
-          </div>
+          <span class="cat-icon">${cat.icon}</span>
+          <span class="cat-name">${cat.name}</span>
         </div>
       `).join('');
 
       // 绑定点击事件
       container.querySelectorAll('.sidebar-category').forEach(el => {
         el.addEventListener('click', (e) => {
-          if (e.target.classList.contains('cat-action')) return;
           const id = el.dataset.id;
           state.activeCategoryId = id;
           renderCategories();
           renderCards();
         });
 
+        el.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          showCategoryContextMenu(e, el.dataset.id);
+        });
+
         el.addEventListener('dragstart', handleCategoryDragStart);
         el.addEventListener('dragover', handleCategoryDragOver);
         el.addEventListener('drop', handleCategoryDrop);
         el.addEventListener('dragend', handleCategoryDragEnd);
-
-        // 编辑/删除按钮
-        el.querySelectorAll('.cat-action').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const action = btn.dataset.action;
-            const catId = el.dataset.id;
-            if (action === 'edit') {
-              openCategoryModal(catId);
-            } else if (action === 'delete') {
-              deleteCategory(catId);
-            }
-          });
-        });
       });
     }
 
@@ -994,19 +1008,18 @@
           <span>↗</span> 在新标签页打开
         </div>
         <div class="context-menu-divider"></div>
-        <div class="context-menu-item" data-action="size">
-          <span>◧</span> 布局
+        <div class="context-menu-item" data-action="edit">
+          <span>✎</span> 编辑卡片
         </div>
-        <div class="size-options" id="contextSizeOptions" style="display:none; padding: 8px 16px;">
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-label">布局</div>
+        <div class="size-options" id="contextSizeOptions">
           <div class="size-option ${currentContextCard.size === '1x1' ? 'active' : ''}" data-size="1x1">1x1</div>
           <div class="size-option ${currentContextCard.size === '1x2' ? 'active' : ''}" data-size="1x2">1x2</div>
           <div class="size-option ${currentContextCard.size === '2x1' ? 'active' : ''}" data-size="2x1">2x1</div>
           <div class="size-option ${currentContextCard.size === '2x2' ? 'active' : ''}" data-size="2x2">2x2</div>
         </div>
         <div class="context-menu-divider"></div>
-        <div class="context-menu-item" data-action="edit">
-          <span>✎</span> 编辑卡片
-        </div>
         <div class="context-menu-item danger" data-action="delete">
           <span>✕</span> 删除
         </div>
@@ -1039,20 +1052,47 @@
           hideContextMenu();
         });
       });
+    }
 
-      // 布局按钮显示/隐藏子选项
-      const sizeItem = menu.querySelector('[data-action="size"]');
-      sizeItem.addEventListener('mouseenter', () => {
-        document.getElementById('contextSizeOptions').style.display = 'flex';
-      });
-      sizeItem.addEventListener('mouseleave', () => {
-        document.getElementById('contextSizeOptions').style.display = 'none';
+    let currentContextCategory = null;
+
+    function showCategoryContextMenu(e, categoryId) {
+      currentContextCategory = state.categories.find(c => c.id === categoryId);
+      if (!currentContextCategory) return;
+
+      const menu = document.getElementById('contextMenu');
+      menu.innerHTML = `
+        <div class="context-menu-item" data-action="edit">
+          <span>✎</span> 编辑分类
+        </div>
+        <div class="context-menu-item danger" data-action="delete">
+          <span>✕</span> 删除分类
+        </div>
+      `;
+
+      menu.style.left = `${e.clientX}px`;
+      menu.style.top = `${e.clientY}px`;
+      menu.classList.add('visible');
+
+      // 绑定菜单项事件
+      menu.querySelectorAll('.context-menu-item').forEach(item => {
+        item.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          const action = item.dataset.action;
+          if (action === 'edit') {
+            openCategoryModal(currentContextCategory.id);
+          } else if (action === 'delete') {
+            deleteCategory(currentContextCategory.id);
+          }
+          hideContextMenu();
+        });
       });
     }
 
     function hideContextMenu() {
       document.getElementById('contextMenu').classList.remove('visible');
       currentContextCard = null;
+      currentContextCategory = null;
     }
 
     function handleContextAction(action) {

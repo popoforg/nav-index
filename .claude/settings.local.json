@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rtk npx *)",
+      "mcp__MiniMax__understand_image",
+      "Bash(open *)",
+      "Bash(rtk ls *)",
+      "Bash(./scripts/start-server.sh --project-dir /Users/rb/Desktop/temp/nav-index)",
+      "Bash(./scripts/stop-server.sh /Users/rb/Desktop/temp/nav-index/.superpowers/brainstorm/42244-1778486394)",
+      "Bash(git init *)",
+      "Bash(rtk git *)",
+      "Bash(rtk read *)",
+      "Bash(rtk wc *)",
+      "Bash(rtk grep *)"
+    ]
+  }
+}
