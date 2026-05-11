@@ -733,6 +733,175 @@
 
     // 页面加载时自动调用
     loadData();
+
+    // 时钟更新
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('clock').textContent = `${hours}:${minutes}`;
+
+      const dateStr = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${['星期日','星期一','星期二','星期三','星期四','星期五','星期六'][now.getDay()]}`;
+      document.getElementById('date').textContent = dateStr;
+
+      // 简化农历
+      document.getElementById('lunar').textContent = '四月初七';
+    }
+
+    // 渲染分类列表
+    function renderCategories() {
+      const container = document.getElementById('sidebarCategories');
+      const sorted = [...state.categories].sort((a, b) => a.order - b.order);
+
+      container.innerHTML = sorted.map(cat => `
+        <div class="sidebar-category ${cat.id === state.activeCategoryId ? 'active' : ''}"
+             data-id="${cat.id}"
+             draggable="true">
+          <span>${cat.icon}</span>
+          <div class="cat-actions">
+            <div class="cat-action" data-action="edit" title="编辑">✎</div>
+            <div class="cat-action" data-action="delete" title="删除">✕</div>
+          </div>
+        </div>
+      `).join('');
+
+      // 绑定点击事件
+      container.querySelectorAll('.sidebar-category').forEach(el => {
+        el.addEventListener('click', (e) => {
+          if (e.target.classList.contains('cat-action')) return;
+          const id = el.dataset.id;
+          state.activeCategoryId = id;
+          renderCategories();
+          renderCards();
+        });
+
+        el.addEventListener('dragstart', handleCategoryDragStart);
+        el.addEventListener('dragover', handleCategoryDragOver);
+        el.addEventListener('drop', handleCategoryDrop);
+        el.addEventListener('dragend', handleCategoryDragEnd);
+
+        // 编辑/删除按钮
+        el.querySelectorAll('.cat-action').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const action = btn.dataset.action;
+            const catId = el.dataset.id;
+            if (action === 'edit') {
+              openCategoryModal(catId);
+            } else if (action === 'delete') {
+              deleteCategory(catId);
+            }
+          });
+        });
+      });
+    }
+
+    // 渲染卡片网格
+    function renderCards() {
+      const grid = document.getElementById('cardsGrid');
+      const categoryCards = state.cards
+        .filter(c => c.categoryId === state.activeCategoryId)
+        .sort((a, b) => a.order - b.order);
+
+      if (categoryCards.length === 0) {
+        grid.innerHTML = `
+          <div class="card-placeholder">
+            <p>该分类下暂无卡片</p>
+            <button class="add-card-btn" onclick="openCardModal()">+ 添加卡片</button>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = categoryCards.map(card => `
+        <div class="card size-${card.size}"
+             data-id="${card.id}"
+             draggable="true"
+             style="--card-color: ${card.color}">
+          <div class="card-icon">${card.emoji}</div>
+          <div class="card-title">${card.title}</div>
+        </div>
+      `).join('');
+
+      // 绑定卡片事件
+      grid.querySelectorAll('.card').forEach(el => {
+        el.addEventListener('click', (e) => {
+          if (e.button === 0) {
+            const card = state.cards.find(c => c.id === el.dataset.id);
+            if (card) window.open(card.url, '_blank');
+          }
+        });
+
+        el.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          showContextMenu(e, el.dataset.id);
+        });
+
+        el.addEventListener('dragstart', handleCardDragStart);
+        el.addEventListener('dragover', handleCardDragOver);
+        el.addEventListener('dragleave', handleCardDragLeave);
+        el.addEventListener('drop', handleCardDrop);
+        el.addEventListener('dragend', handleCardDragEnd);
+      });
+
+      // 更新分类头部
+      const activeCat = state.categories.find(c => c.id === state.activeCategoryId);
+      const iconDisplay = document.getElementById('categoryIconDisplay');
+      const nameDisplay = document.getElementById('categoryNameDisplay');
+      if (iconDisplay) iconDisplay.textContent = activeCat?.icon || '🏠';
+      if (nameDisplay) nameDisplay.textContent = activeCat?.name || '';
+    }
+
+    // 创建分类头部（如果不存在）
+    function ensureCategoryHeader() {
+      const section = document.getElementById('cardsSection');
+      if (!section.querySelector('.category-header')) {
+        const header = document.createElement('div');
+        header.className = 'category-header';
+        header.innerHTML = `
+          <div class="category-title">
+            <span id="categoryIconDisplay">🏠</span>
+            <span id="categoryNameDisplay">常用</span>
+          </div>
+          <button class="add-card-btn" id="addCardBtn">+ 添加卡片</button>
+        `;
+        section.insertBefore(header, section.querySelector('.cards-grid'));
+      }
+    }
+
+    // 更新分类头部
+    function updateCategoryHeader() {
+      const activeCat = state.categories.find(c => c.id === state.activeCategoryId);
+      const iconDisplay = document.getElementById('categoryIconDisplay');
+      const nameDisplay = document.getElementById('categoryNameDisplay');
+      const addBtn = document.getElementById('addCardBtn');
+      if (iconDisplay) iconDisplay.textContent = activeCat?.icon || '🏠';
+      if (nameDisplay) nameDisplay.textContent = activeCat?.name || '';
+      if (addBtn) addBtn.onclick = () => openCardModal();
+    }
+
+    // 拖拽相关 placeholder 函数
+    function handleCategoryDragStart(e) {}
+    function handleCategoryDragOver(e) {}
+    function handleCategoryDrop(e) {}
+    function handleCategoryDragEnd(e) {}
+    function handleCardDragStart(e) {}
+    function handleCardDragOver(e) {}
+    function handleCardDragLeave(e) {}
+    function handleCardDrop(e) {}
+    function handleCardDragEnd(e) {}
+    function showContextMenu(e, cardId) {}
+    function openCategoryModal(catId) {}
+    function deleteCategory(catId) {}
+    function openCardModal() {}
+
+    // 启动
+    ensureCategoryHeader();
+    updateClock();
+    setInterval(updateClock, 1000);
+    renderCategories();
+    updateCategoryHeader();
+    renderCards();
   </script>
 </body>
 </html>
