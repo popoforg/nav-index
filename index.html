@@ -1636,10 +1636,22 @@
       return data;
     }
 
+    function getCurrentGistSettings() {
+      return {
+        token: document.getElementById('gistToken').value.trim(),
+        id: document.getElementById('gistId').value.trim(),
+        filename: document.getElementById('gistFilename').value.trim() || 'nav-index-config.json'
+      };
+    }
+
     async function testGistConnection() {
-      const settings = getGistSettings();
+      const settings = getCurrentGistSettings();
       if (!settings.token) {
         showGistStatus('请先填写 GitHub Token', false);
+        return;
+      }
+      if (!settings.id) {
+        showGistStatus('请先填写 Gist ID', false);
         return;
       }
       try {
@@ -1651,9 +1663,13 @@
     }
 
     async function uploadToGist() {
-      const settings = getGistSettings();
-      if (!settings.token || !settings.id) {
-        showGistStatus('请填写 Token 和 Gist ID', false);
+      const settings = getCurrentGistSettings();
+      if (!settings.token) {
+        showGistStatus('请先填写 GitHub Token', false);
+        return;
+      }
+      if (!settings.id) {
+        showGistStatus('请先填写 Gist ID', false);
         return;
       }
 
@@ -1694,9 +1710,13 @@
     }
 
     async function downloadFromGist() {
-      const settings = getGistSettings();
-      if (!settings.token || !settings.id) {
-        showGistStatus('请填写 Token 和 Gist ID', false);
+      const settings = getCurrentGistSettings();
+      if (!settings.token) {
+        showGistStatus('请先填写 GitHub Token', false);
+        return;
+      }
+      if (!settings.id) {
+        showGistStatus('请先填写 Gist ID', false);
         return;
       }
 
@@ -1746,11 +1766,7 @@
 
     function closeSettingsModal() {
       // Save Gist settings before closing
-      saveGistSettings({
-        token: document.getElementById('gistToken').value,
-        id: document.getElementById('gistId').value,
-        filename: document.getElementById('gistFilename').value
-      });
+      saveGistSettings(getCurrentGistSettings());
       document.getElementById('settingsModal').classList.remove('visible');
     }
 
