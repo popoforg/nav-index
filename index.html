@@ -377,9 +377,20 @@
             border-radius: 10px;
             overflow: hidden;
             background: var(--bg-tertiary);
+            position: relative;
         }
 
-        .card-icon img {
+        .card-icon-fallback {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .card-icon img.loaded {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             object-fit: contain;
@@ -1054,6 +1065,15 @@
             });
         }
 
+        function getFaviconUrl(url) {
+            try {
+                const hostname = new URL(url.startsWith('http') ? url : 'https://' + url).hostname;
+                return hostname ? 'https://www.google.com/s2/favicons?domain=' + hostname + '&sz=64' : '';
+            } catch {
+                return '';
+            }
+        }
+
         function renderCards(searchQuery = '') {
             const grid = document.getElementById('cardsGrid');
             const query = searchQuery.toLowerCase().trim();
@@ -1081,8 +1101,8 @@
             } else {
                 grid.innerHTML = cardsToShow.map((card, i) => `
                     <div class="card" data-id="${card.id}" draggable="true" style="animation-delay: ${i * 0.04}s">
-                        <div class="card-icon">
-                            <img src="${card.icon || 'https://www.google.com/s2/favicons?domain=' + encodeURIComponent(card.url) + '&sz=64'}" alt="${card.title}" onerror="this.style.display='none'">
+                        <div class="card-icon" data-favicon="${card.icon || getFaviconUrl(card.url)}">
+                            <span class="card-icon-fallback">${card.title.charAt(0).toUpperCase()}</span>
                         </div>
                         <div class="card-content">
                             <div class="card-title">${highlightMatch(card.title, query)}</div>
@@ -1090,6 +1110,20 @@
                         </div>
                     </div>
                 `).join('');
+
+                // Preload favicon, show first letter as fallback
+                grid.querySelectorAll('.card-icon[data-favicon]').forEach(icon => {
+                    const url = icon.dataset.favicon;
+                    if (!url) return;
+                    const img = new Image();
+                    img.onload = () => {
+                        if (img.naturalWidth > 0) {
+                            img.className = 'loaded';
+                            icon.appendChild(img);
+                        }
+                    };
+                    img.src = url;
+                });
 
                 grid.querySelectorAll('.card').forEach(el => {
                     el.addEventListener('click', (e) => {
