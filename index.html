@@ -1071,8 +1071,157 @@
       }
     }
 
-    function openCategoryModal(catId) {}
-    function deleteCategory(catId) {}
+    function openCategoryModal(categoryId = null) {
+      const modal = document.getElementById('categoryModal');
+      const title = document.getElementById('categoryModalTitle');
+      const nameInput = document.getElementById('categoryNameInput');
+      const iconInput = document.getElementById('categoryIconInput');
+
+      if (categoryId) {
+        const cat = state.categories.find(c => c.id === categoryId);
+        if (!cat) return;
+        state.editingCategory = cat;
+        title.textContent = '编辑分类';
+        nameInput.value = cat.name;
+        iconInput.value = cat.icon;
+      } else {
+        state.editingCategory = null;
+        title.textContent = '添加分类';
+        nameInput.value = '';
+        iconInput.value = '📁';
+      }
+
+      modal.classList.add('visible');
+      nameInput.focus();
+    }
+
+    function closeCategoryModal() {
+      document.getElementById('categoryModal').classList.remove('visible');
+      state.editingCategory = null;
+    }
+
+    function saveCategory() {
+      const name = document.getElementById('categoryNameInput').value.trim();
+      const icon = document.getElementById('categoryIconInput').value.trim() || '📁';
+
+      if (!name) {
+        showToast('请输入分类名称');
+        return;
+      }
+
+      if (state.editingCategory) {
+        state.editingCategory.name = name;
+        state.editingCategory.icon = icon;
+      } else {
+        const newCat = {
+          id: generateId(),
+          name,
+          icon,
+          order: state.categories.length,
+          createdAt: Date.now()
+        };
+        state.categories.push(newCat);
+        state.activeCategoryId = newCat.id;
+      }
+
+      saveData();
+      renderCategories();
+      updateCategoryHeader();
+      renderCards();
+      closeCategoryModal();
+      showToast(state.editingCategory ? '分类已更新' : '分类已添加');
+    }
+
+    function deleteCategory(categoryId) {
+      const catCards = state.cards.filter(c => c.categoryId === categoryId);
+      if (catCards.length > 0) {
+        if (!confirm(`该分类下有 ${catCards.length} 张卡片，删除分类将同时删除所有卡片。确定删除吗？`)) {
+          return;
+        }
+        state.cards = state.cards.filter(c => c.categoryId !== categoryId);
+      }
+
+      state.categories = state.categories.filter(c => c.id !== categoryId);
+
+      // 如果删除了当前选中的分类，切换到第一个
+      if (state.activeCategoryId === categoryId) {
+        state.activeCategoryId = state.categories[0]?.id || null;
+      }
+
+      saveData();
+      renderCategories();
+      updateCategoryHeader();
+      renderCards();
+      showToast('分类已删除');
+    }
+
+    // 导出
+    function exportConfig() {
+      const data = {
+        version: '1.0',
+        categories: state.categories,
+        cards: state.cards,
+        exportedAt: new Date().toISOString()
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `nav-index-config-${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('配置已导出');
+    }
+
+    // 导入
+    function importConfig(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+
+          // 验证格式
+          if (!data.categories || !Array.isArray(data.categories)) {
+            throw new Error('无效的配置文件格式');
+          }
+
+          // 合并数据
+          if (confirm('导入将合并现有数据（新增的分类和卡片会被添加，冲突的会覆盖）。确定导入吗？')) {
+            // 合并分类
+            data.categories.forEach(cat => {
+              const existing = state.categories.find(c => c.id === cat.id);
+              if (existing) {
+                Object.assign(existing, cat);
+              } else {
+                state.categories.push(cat);
+              }
+            });
+
+            // 合并卡片
+            data.cards.forEach(card => {
+              const existing = state.cards.find(c => c.id === card.id);
+              if (existing) {
+                Object.assign(existing, card);
+              } else {
+                state.cards.push(card);
+              }
+            });
+
+            saveData();
+            renderCategories();
+            updateCategoryHeader();
+            renderCards();
+            showToast('配置已导入');
+          }
+        } catch (err) {
+          showToast('导入失败: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
 
     function openCardModal(cardId = null) {
       const modal = document.getElementById('cardModal');
@@ -1178,6 +1327,34 @@
     document.getElementById('cardCancel').addEventListener('click', closeCardModal);
     document.getElementById('cardConfirm').addEventListener('click', saveCard);
     document.getElementById('addCardBtn').addEventListener('click', () => openCardModal());
+
+    // 分类弹窗事件
+    document.getElementById('addCategoryBtn').addEventListener('click', () => openCategoryModal());
+    document.getElementById('categoryCancel').addEventListener('click', closeCategoryModal);
+    document.getElementById('categoryConfirm').addEventListener('click', saveCategory);
+
+    // 导入导出事件
+    document.getElementById('exportBtn').addEventListener('click', exportConfig);
+    document.getElementById('importBtn').addEventListener('click', () => {
+      document.getElementById('fileInput').click();
+    });
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        importConfig(file);
+        e.target.value = '';
+      }
+    });
+
+    // 搜索功能
+    document.getElementById('searchInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const q = e.target.value.trim();
+        if (q) {
+          window.open(`https://www.baidu.com/s?wd=${encodeURIComponent(q)}`, '_blank');
+        }
+      }
+    });
 
     // 点击其他地方关闭菜单
     document.addEventListener('click', hideContextMenu);
