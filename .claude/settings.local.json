@@ -11,7 +11,10 @@
       "Bash(rtk git *)",
       "Bash(rtk read *)",
       "Bash(rtk wc *)",
-      "Bash(rtk grep *)"
+      "Bash(rtk grep *)",
+      "Bash(node -c /Users/rb/Desktop/temp/nav-index/index.html)",
+      "Bash(git reset *)",
+      "Bash(git checkout *)"
     ]
   }
 }
