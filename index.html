@@ -880,16 +880,102 @@
       if (addBtn) addBtn.onclick = () => openCardModal();
     }
 
-    // 拖拽相关 placeholder 函数
-    function handleCategoryDragStart(e) {}
-    function handleCategoryDragOver(e) {}
-    function handleCategoryDrop(e) {}
-    function handleCategoryDragEnd(e) {}
-    function handleCardDragStart(e) {}
-    function handleCardDragOver(e) {}
-    function handleCardDragLeave(e) {}
-    function handleCardDrop(e) {}
-    function handleCardDragEnd(e) {}
+    // 拖拽相关函数
+    let draggedCategoryId = null;
+
+    function handleCategoryDragStart(e) {
+      draggedCategoryId = e.currentTarget.dataset.id;
+      e.currentTarget.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleCategoryDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+
+    function handleCategoryDrop(e) {
+      e.preventDefault();
+      const targetId = e.currentTarget.dataset.id;
+      if (draggedCategoryId === targetId) return;
+
+      const draggedIdx = state.categories.findIndex(c => c.id === draggedCategoryId);
+      const targetIdx = state.categories.findIndex(c => c.id === targetId);
+
+      const [dragged] = state.categories.splice(draggedIdx, 1);
+      state.categories.splice(targetIdx, 0, dragged);
+
+      // 更新 order
+      state.categories.forEach((c, i) => c.order = i);
+
+      saveData();
+      renderCategories();
+    }
+
+    function handleCategoryDragEnd(e) {
+      e.currentTarget.classList.remove('dragging');
+      draggedCategoryId = null;
+    }
+
+    let draggedCardId = null;
+
+    function handleCardDragStart(e) {
+      draggedCardId = e.currentTarget.dataset.id;
+      e.currentTarget.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleCardDragOver(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add('drag-over');
+    }
+
+    function handleCardDragLeave(e) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleCardDrop(e) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+
+      const targetId = e.currentTarget.dataset.id;
+      if (draggedCardId === targetId) return;
+
+      // 获取目标卡片所在分类
+      const targetCard = state.cards.find(c => c.id === targetId);
+      if (!targetCard) return;
+
+      // 如果跨分类拖拽，只在同分类内排序
+      const draggedCard = state.cards.find(c => c.id === draggedCardId);
+      if (!draggedCard) return;
+
+      // 如果不在同一分类，不允许拖拽
+      if (draggedCard.categoryId !== targetCard.categoryId) {
+        return;
+      }
+
+      const draggedIdx = state.cards.findIndex(c => c.id === draggedCardId);
+      const targetIdx = state.cards.findIndex(c => c.id === targetId);
+
+      const [dragged] = state.cards.splice(draggedIdx, 1);
+      state.cards.splice(targetIdx, 0, dragged);
+
+      // 更新同分类内的 order
+      const categoryCards = state.cards
+        .filter(c => c.categoryId === targetCard.categoryId)
+        .sort((a, b) => a.order - b.order);
+      categoryCards.forEach((c, i) => c.order = i);
+
+      saveData();
+      renderCards();
+    }
+
+    function handleCardDragEnd(e) {
+      e.currentTarget.classList.remove('dragging');
+      e.currentTarget.classList.remove('drag-over');
+      draggedCardId = null;
+    }
+
     function showContextMenu(e, cardId) {}
     function openCategoryModal(catId) {}
     function deleteCategory(catId) {}
