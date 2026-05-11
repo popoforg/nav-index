@@ -764,19 +764,6 @@
             background: #e3f2fd;
             color: #1565c0;
         }
-        bottom: 32px;
-        left: 50%;
-        transform: translateX(-50%) translateY(60px);
-        background: var(--text-primary);
-        color: white;
-        padding: 13px 26px;
-        font-size: 13px;
-        font-weight: 500;
-        z-index: 4000;
-        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        border-radius: 10px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-        }
 
         .toast.visible {
             transform: translateX(-50%) translateY(0);
@@ -829,8 +816,8 @@
     <div class="app">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-logo">NA<span>V</span></div>
-                <div class="sidebar-subtitle">Index</div>
+                <div class="sidebar-logo">泡泡<span>摩斯</span></div>
+                <div class="sidebar-subtitle">NAV-Index</div>
             </div>
             <div class="sidebar-categories" id="sidebarCategories"></div>
             <div class="sidebar-footer">
@@ -885,7 +872,7 @@
             </div>
             <div class="modal-field">
                 <label>图标 (emoji)</label>
-                <input type="text" id="categoryIconInput" placeholder="📁">
+                <input type="text" id="categoryIconInput" placeholder="选填，默认 📁">
             </div>
             <div class="modal-actions">
                 <button class="modal-btn cancel" id="categoryCancel">取消</button>
@@ -1045,7 +1032,7 @@
                 const cardCount = state.cards.filter(c => c.categoryId === cat.id).length;
                 return `
                     <div class="sidebar-category ${cat.id === state.activeCategoryId ? 'active' : ''}" data-id="${cat.id}">
-                        <span class="cat-icon">${cat.icon}</span>
+                        <span class="cat-icon">${cat.icon || '📁'}</span>
                         <span class="cat-name">${cat.name}</span>
                         <span class="cat-count">${cardCount}</span>
                     </div>
@@ -1200,7 +1187,7 @@
 
         function saveCategory() {
             const name = document.getElementById('categoryNameInput').value.trim();
-            const icon = document.getElementById('categoryIconInput').value.trim() || '📁';
+            const icon = document.getElementById('categoryIconInput').value.trim();
 
             if (!name) {
                 showToast('请输入分类名称');
@@ -1375,7 +1362,7 @@
                 <div class="context-menu-label">移动到分类</div>
                 ${otherCategories.map(c => `
                     <div class="context-menu-item" data-action="selectCategory" data-category-id="${c.id}">
-                        <span>${c.icon}</span> ${c.name}
+                        <span>${c.icon || '📁'}</span> ${c.name}
                     </div>
                 `).join('')}
             `;
