@@ -22,7 +22,7 @@
       --accent-sage: #7d9a78;
       --accent-navy: #3d5a80;
       --accent-plum: #8e5a7b;
-      --sidebar-width: 200px;
+      --sidebar-width: 240px;
       --card-radius: 8px;
     }
 
@@ -261,7 +261,7 @@
       flex: 1;
       margin-left: var(--sidebar-width);
       padding: 48px 56px;
-      max-width: 1400px;
+      min-width: 0;
     }
 
     /* Header */
@@ -278,7 +278,7 @@
 
     .greeting {
       font-family: 'Crimson Pro', serif;
-      font-size: 42px;
+      font-size: 56px;
       font-weight: 600;
       color: var(--text-primary);
       letter-spacing: -1px;
@@ -322,14 +322,15 @@
       background: var(--bg-secondary);
       border: 1px solid var(--border-color);
       border-radius: 12px;
-      padding: 18px 24px;
+      padding: 20px 28px;
       transition: all 0.2s;
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      max-width: 100%;
     }
 
     .search-bar:focus-within {
       border-color: var(--accent-coral);
-      box-shadow: 0 4px 20px rgba(232, 90, 79, 0.1);
+      box-shadow: 0 4px 24px rgba(232, 90, 79, 0.12);
     }
 
     .search-bar svg {
@@ -352,6 +353,99 @@
 
     .search-bar input::placeholder {
       color: var(--text-tertiary);
+    }
+
+    /* Search Engine Selector */
+    .search-engine-selector {
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .current-engine {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .current-engine:hover {
+      background: var(--border-color);
+    }
+
+    .current-engine .engine-icon {
+      font-size: 16px;
+    }
+
+    .current-engine .dropdown-arrow {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-left: 2px;
+    }
+
+    .search-engine-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 8px;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      z-index: 100;
+      min-width: 160px;
+    }
+
+    .search-engine-dropdown.visible {
+      display: flex;
+      animation: dropdownIn 0.15s ease;
+    }
+
+    @keyframes dropdownIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .engine-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.1s;
+      font-size: 13px;
+    }
+
+    .engine-option:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .engine-option.active {
+      background: rgba(232, 90, 79, 0.1);
+      color: var(--accent-coral);
+    }
+
+    .engine-option .engine-icon {
+      font-size: 18px;
+    }
+
+    .search-icon {
+      flex-shrink: 0;
+      cursor: pointer;
     }
 
     /* Category Section */
@@ -426,7 +520,7 @@
     /* Cards Grid */
     .cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
       gap: 16px;
     }
 
@@ -817,10 +911,35 @@
         </div>
         <div class="divider"></div>
       </header>
-      <div class="search-container">
+<div class="search-container">
         <div class="search-bar">
-          <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <div class="search-engine-selector" id="searchEngineSelector">
+            <span class="current-engine" id="currentEngine">
+              <span class="engine-icon" id="engineIcon">🔍</span>
+              <span class="engine-name" id="engineName">百度</span>
+              <span class="dropdown-arrow">▾</span>
+            </span>
+          </div>
           <input type="text" placeholder="搜索或输入网址，按回车跳转..." id="searchInput">
+          <svg class="search-icon" viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <div class="search-engine-dropdown" id="searchEngineDropdown">
+          <div class="engine-option active" data-engine="baidu" data-url="https://www.baidu.com/s?wd=">
+            <span class="engine-icon">🔍</span>
+            <span class="engine-name">百度</span>
+          </div>
+          <div class="engine-option" data-engine="bing" data-url="https://www.bing.com/search?q=">
+            <span class="engine-icon">🌐</span>
+            <span class="engine-name">必应</span>
+          </div>
+          <div class="engine-option" data-engine="google" data-url="https://www.google.com/search?q=">
+            <span class="engine-icon">🌏</span>
+            <span class="engine-name">Google</span>
+          </div>
+          <div class="engine-option" data-engine="mita" data-url="https://mita.ai/s?q=">
+            <span class="engine-icon">🤖</span>
+            <span class="engine-name">秘塔AI</span>
+          </div>
         </div>
       </div>
       <section class="category-section" id="categorySection">
@@ -1826,10 +1945,56 @@
       }
     });
 
+    // Search Engine functionality
+    let currentSearchEngine = {
+      name: '百度',
+      icon: '🔍',
+      url: 'https://www.baidu.com/s?wd='
+    };
+
+    const searchEngines = [
+      { name: '百度', icon: '🔍', url: 'https://www.baidu.com/s?wd=' },
+      { name: '必应', icon: '🌐', url: 'https://www.bing.com/search?q=' },
+      { name: 'Google', icon: '🌏', url: 'https://www.google.com/search?q=' },
+      { name: '秘塔AI', icon: '🤖', url: 'https://mita.ai/s?q=' }
+    ];
+
+    function updateSearchEngineDisplay() {
+      document.getElementById('engineIcon').textContent = currentSearchEngine.icon;
+      document.getElementById('engineName').textContent = currentSearchEngine.name;
+    }
+
+    function selectSearchEngine(engine) {
+      currentSearchEngine = engine;
+      updateSearchEngineDisplay();
+      document.getElementById('searchEngineDropdown').classList.remove('visible');
+      document.getElementById('searchInput').focus();
+    }
+
+    // Search engine selector click
+    document.getElementById('searchEngineSelector').addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('searchEngineDropdown').classList.toggle('visible');
+    });
+
+    // Search engine options
+    document.querySelectorAll('.engine-option').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const engine = searchEngines.find(eng => eng.name === opt.dataset.engine);
+        if (engine) selectSearchEngine(engine);
+      });
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', () => {
+      document.getElementById('searchEngineDropdown').classList.remove('visible');
+    });
+
     document.getElementById('searchInput').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         const q = e.target.value.trim();
-        if (q) window.open(`https://www.baidu.com/s?wd=${encodeURIComponent(q)}`, '_blank');
+        if (q) window.open(currentSearchEngine.url + encodeURIComponent(q), '_blank');
       }
     });
 
